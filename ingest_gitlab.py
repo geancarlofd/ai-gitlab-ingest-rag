@@ -2,12 +2,13 @@ import os
 import shutil
 import requests
 from git import Repo
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import TextLoader
-from langchain.embeddings import OllamaEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 from tqdm import tqdm
+
+from langchain_community.vectorstores import Chroma
+from langchain_community.document_loaders import TextLoader
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
@@ -29,8 +30,7 @@ HEADERS = {"PRIVATE-TOKEN": GITLAB_TOKEN}
 def get_group_id(full_path):
     url = f"https://{GROUP_HOST}/api/v4/groups/{full_path}"
     res = requests.get(url, headers=HEADERS)
-    if res.status_code != 200:
-        raise Exception(f"Erro ao buscar grupo '{full_path}': {res.text}")
+    res.raise_for_status()
     return res.json()["id"]
 
 
@@ -40,15 +40,17 @@ def get_all_projects(group_id):
     def recurse(gid):
         proj_url = f"https://{GROUP_HOST}/api/v4/groups/{gid}/projects?per_page=100&include_subgroups=true"
         res = requests.get(proj_url, headers=HEADERS)
+        res.raise_for_status()
         all_projects.extend(res.json())
 
         subgroup_url = f"https://{GROUP_HOST}/api/v4/groups/{gid}/subgroups?per_page=100"
         res = requests.get(subgroup_url, headers=HEADERS)
+        res.raise_for_status()
         for subgroup in res.json():
             recurse(subgroup["id"])
 
     recurse(group_id)
-    return all_projects  # retorna objetos com path, url, etc.
+    return all_projects
 
 
 def clone_repos():
@@ -57,7 +59,7 @@ def clone_repos():
 
     for project in tqdm(projects, desc="Clonando repositórios"):
         repo_url = project["ssh_url_to_repo"]
-        relative_path = project["path_with_namespace"]  # ex: gitops/consignado-connecta/webapi
+        relative_path = project["path_with_namespace"]
         dest = os.path.join(CLONE_BASE_DIR, relative_path)
 
         if os.path.exists(dest):

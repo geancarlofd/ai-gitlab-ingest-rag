@@ -8,10 +8,9 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+      - ./startup.sh:/startup.sh
+    entrypoint: [ "bash", "/startup.sh" ]
     restart: unless-stopped
-
-#docker exec -it ollama ollama run llama3
-    
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -25,6 +24,22 @@ services:
     volumes:
       - webui_data:/app/backend/data
     restart: unless-stopped
+
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: rag-api
+    ports:
+      - "15674:15674"
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./repos:/app/repos
+      - ./api_rag_agent.py:/app/api_rag_agent.py
+      - ./requirements-api.txt:/app/requirements-api.txt
+      - .env:/app/.env
+    restart: unless-stopped
+
 
 volumes:
   ollama_data:
