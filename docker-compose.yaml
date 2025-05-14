@@ -32,14 +32,17 @@ services:
     container_name: rag-api
     ports:
       - "15674:15674"
+    env_file:
+      - .env
     volumes:
       - ./chroma_db:/app/chroma_db
       - ./repos:/app/repos
       - ./api_rag_agent.py:/app/api_rag_agent.py
       - ./requirements-api.txt:/app/requirements-api.txt
       - .env:/app/.env
+    depends_on:
+      - ollama
     restart: unless-stopped
-
 
 volumes:
   ollama_data:

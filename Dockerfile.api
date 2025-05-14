@@ -1,20 +1,22 @@
 FROM python:3.11-slim
 
 # Instala dependências do sistema
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
-# Diretório de trabalho
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos da API
-COPY api_rag_agent.py ./
-COPY requirements-api.txt ./
+# Copia os arquivos da API e de dependências
+COPY api_rag_agent.py .
+COPY requirements-api.txt .
 
-# Instala dependências Python
+# Instala as dependências Python
 RUN pip install --no-cache-dir -r requirements-api.txt
 
-# Expõe a porta do serviço
+# Expõe a porta usada pela API
 EXPOSE 15674
 
-# Comando de execução
+# Comando padrão de execução
 CMD ["uvicorn", "api_rag_agent:app", "--host", "0.0.0.0", "--port", "15674"]
